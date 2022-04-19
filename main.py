@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import datetime
-import operator
+import os
 
 def add_space(string):
     string_length = len(string) + 1  # will be adding 10 extra spaces
@@ -60,6 +60,29 @@ def process_stacks(row):
     if row['Tertiary_Stack'] != '':
         row['Tertiary_Stack_Length'] = teams[2][1]
     return row
+
+def stacks_debrief(Lineups):
+    five_stacks_length = len(Lineups[Lineups['Main_Stack_Length'] == 5])/len(Lineups)
+    four_stacks_length = len(Lineups[Lineups['Main_Stack_Length'] == 4])/len(Lineups)
+    three_stacks_length = len(Lineups[Lineups['Main_Stack_Length'] == 3])/len(Lineups)
+    two_stacks_length = len(Lineups[Lineups['Main_Stack_Length'] == 2])/len(Lineups)
+    others = 1 - sum([five_stacks_length, four_stacks_length, three_stacks_length, two_stacks_length])
+    freqs = pd.DataFrame([five_stacks_length, four_stacks_length, three_stacks_length, two_stacks_length, others],
+                         index=['five_stacks', 'four_stacks', 'three_stacks', 'two_stacks', 'chaos'])
+
+    five_stacks = (Lineups[Lineups['Main_Stack_Length'] == 5].groupby('Secondary_Stack_Length').count()/ len(
+        Lineups[Lineups['Main_Stack_Length'] == 5])).loc[:,'Rank']
+    four_stacks = (Lineups[Lineups['Main_Stack_Length'] == 4].groupby(['Secondary_Stack_Length',
+                                                                                  'Tertiary_Stack_Length']).count()/len(
+        Lineups[Lineups['Main_Stack_Length'] == 4])).loc[:,'Rank']
+    three_stacks = (Lineups[Lineups['Main_Stack_Length'] == 3].groupby(['Secondary_Stack_Length',
+                                                                                  'Tertiary_Stack_Length']).count()/len(
+        Lineups[Lineups['Main_Stack_Length'] == 3])).loc[:,'Rank']
+    two_stacks = (Lineups[Lineups['Main_Stack_Length'] == 2].groupby(['Secondary_Stack_Length',
+                                                                                  'Tertiary_Stack_Length']).count()/len(
+        Lineups[Lineups['Main_Stack_Length'] == 2])).loc[:,'Rank']
+
+    return freqs, five_stacks, four_stacks, three_stacks, two_stacks
 
 
 
@@ -129,7 +152,19 @@ Lineups = Lineups[['Rank', 'Points', 'Player_1_Name', 'Player_2_Name', 'Player_3
                    'Player_3_Team', 'Player_4_Team', 'Player_5_Team', 'Player_6_Team', 'Player_7_Team',
                    'Player_8_Team', 'Player_9_Team', 'Player_10_Team']]
 Lineups = Lineups.apply(lambda x: process_stacks(x), axis=1)
-Lineups.to_csv('C:\\Users\\Andrew Moss\\PycharmProjects\\Lineup_Construction_Research\\Results\\' + Date_Slate +'.csv')
+freqs, five_stacks, four_stacks, three_stacks, two_stacks = stacks_debrief(Lineups)
+
+
+
+
+if not os.path.exists('C:\\Users\\Andrew Moss\\PycharmProjects\\Lineup_Construction_Research\\Results\\' + Date_Slate +'\\'):
+    os.mkdir('C:\\Users\\Andrew Moss\\PycharmProjects\\Lineup_Construction_Research\\Results\\' + Date_Slate +'\\')
+Lineups.to_csv('C:\\Users\\Andrew Moss\\PycharmProjects\\Lineup_Construction_Research\\Results\\' + Date_Slate +'\\Lineups.csv')
+freqs.to_csv('C:\\Users\\Andrew Moss\\PycharmProjects\\Lineup_Construction_Research\\Results\\' + Date_Slate +'\\freqs.csv')
+five_stacks.to_csv('C:\\Users\\Andrew Moss\\PycharmProjects\\Lineup_Construction_Research\\Results\\' + Date_Slate +'\\five_stacks.csv')
+four_stacks.to_csv('C:\\Users\\Andrew Moss\\PycharmProjects\\Lineup_Construction_Research\\Results\\' + Date_Slate +'\\four_stacks.csv')
+three_stacks.to_csv('C:\\Users\\Andrew Moss\\PycharmProjects\\Lineup_Construction_Research\\Results\\' + Date_Slate +'\\three_stacks.csv')
+two_stacks.to_csv('C:\\Users\\Andrew Moss\\PycharmProjects\\Lineup_Construction_Research\\Results\\' + Date_Slate +'\\two_stacks.csv')
 
 
 
